@@ -17,9 +17,14 @@ conda activate module06
 3. Run all cells from top to bottom. The final cell reads the sequences, builds the distance matrix, runs neighbor joining, and plots the tree
 
 ### Functions
-- **`read_fasta(filename)`**: Takes the path to a FASTA file and returns a dictionary mapping each sequence ID to its sequence. The ID is the last word of each header line since the full headers contain commas and brackets that would break the Newick format
+- **`read_fasta(filename)`**: Takes the path to a FASTA file and returns a dictionary mapping each sequence ID to its sequence. 
 - **`cal_score(matrix, seq1, seq2, i, j, match, mismatch, gap)`**: Helper reused from Project 05. Returns the Smith-Waterman score for one cell of the scoring matrix (never below 0). The traceback direction was removed since only the score is needed
 - **`smith_waterman(sequence1, sequence2, match_score=2.0, mismatch_penalty=-1.0, gap_penalty=-1.0)`**: Returns a normalized similarity score between 0 and 1: the best local alignment score divided by the average of the two sequences' self-scores (each sequence's length x match score).
+
+
+** add: for this example it doesnt matter if we normalize using sqaure root or if we do the average of the 2 self-scores because all the sequences have the same length 
+
+
 - **`build_distance_matrix(sequences)`**: Takes the sequence dictionary and returns a tuple of the n x n distance matrix and the list of IDs in matrix order. Each similarity is clamped to [0.000001, 1] and converted to a distance with -ln
 - **`neighbor_joining(distance_matrix, labels)`**: Takes the distance matrix and IDs and returns the tree as a Newick string. Negative branch lengths are set to 0, with the full pairwise distance given to the sister branch
 - **`plot_tree(tree)`**: Provided with the template. Draws the Newick tree with Biopython.
@@ -36,7 +41,7 @@ current_id = None
 for each line in file:
     strip whitespace
     if line starts with ">":
-        current_id = the last word of the header line
+        current_id = labels
         sequence[current_id] = empty string
     else if line is not empty:
         append line to sequence[current_id]
