@@ -17,7 +17,7 @@ conda activate module06
 3. Run all cells from top to bottom. The final cell reads the sequences, builds the distance matrix, runs neighbor joining, and plots the tree
 
 ### Functions
-- **`read_fasta(filename)`**: Takes the path to a FASTA file and returns a dictionary mapping each sequence ID to its sequence. 
+- **`read_fasta(filename)`**: Takes the path to a FASTA file and returns a dictionary mapping each sequence ID to its sequence. The sequence ID is the last word on each header line. 
 - **`cal_score(matrix, seq1, seq2, i, j, match, mismatch, gap)`**: Helper reused from Project 05. Returns the Smith-Waterman score for one cell of the scoring matrix (never below 0). The traceback direction was removed since only the score is needed
 - **`smith_waterman(sequence1, sequence2, match_score=2.0, mismatch_penalty=-1.0, gap_penalty=-1.0)`**: Returns a normalized similarity score between 0 and 1: the best local alignment score divided by the average of the two sequences' self-scores (each sequence's length x match score).
 
@@ -41,7 +41,7 @@ current_id = None
 for each line in file:
     strip whitespace
     if line starts with ">":
-        current_id = labels
+        current_id = last word in the line
         sequence[current_id] = empty string
     else if line is not empty:
         append line to sequence[current_id]
