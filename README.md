@@ -158,11 +158,14 @@ Normalizing by the pair's average self-score corrects for sequence length (based
 
 
 ## Successes
-- We were able to reuse and trim the project 05 smith-waterman code.
+- One of our biggest successes was how we worked together to finalize the project. We all approached certain parts differently, but when we compared our code, we found that a lot of it was actually very similar. We ended up combining parts of different implementations based on what made the most sense rather than just choosing one person's work.
+- Being able to build on our Smith-Waterman code from Project 05 saved us a lot of time. We already understood the alignment process, so we could spend more time figuring out how to normalize the scores, build the distance matrix, and use it for Neighbor-Joining.
+- Our final group meeting was also really productive. We went through the different implementations, compared our trees, and talked through decisions like which distance transformation to use and how to handle negative branch lengths. We were able to explain our reasoning, question each other's choices, and agree on a final version without having to start everything over.
 
 ## Struggles
-- Understanding why `D*` corrects raw distance
-- Deciding between using -ln() and 1 - sim for the similarity to distance conversion, but we eventually chose -ln() because it makes distances grow roughly in proportion to evolutionary change, which keeps them closer to additive.
+- One of our biggest struggles was figuring out which formulas to use, especially for normalizing the Smith-Waterman scores and converting similarity into distance. There were different ways to approach both, and it wasn't always clear which would be most appropriate for our sequences. We spent quite a bit of time comparing the formulas and discussing how they would affect the final distance matrix and tree.
+- Neighbor-Joining was probably the most challenging part of the project. There were a lot of calculations to keep track of, and understanding how the distance matrix changes after joining two nodes took some time. We also had to figure out how to handle negative branch lengths and when to stop the algorithm, since different implementations handled these differently.
+- Finding a time when everyone could meet for long enough continues to be a challenge, especially with everyone's different schedules. I think we did a great job making it work though, whether that meant working on things individually beforehand or making the most of the time we did have together.
 
 ## Reflections 
 ### Group Leader: Katelyn
@@ -170,7 +173,14 @@ Going into this project, I had a basic understanding of how the neighbor-joining
 Our group worked well together, and we decided to independently attempt to write the pseudocode before meeting to discuss it. This was successful because it allowed us to all identify the parts that we didn't understand and all get the chance to try it. 
 In the future, I think it would be interesting to consider that our Smith-Waterman scoring gives every mismatch the same penalty. For amino acids, a substitution matrix like BLOSUM62 would be more biologically accurate, since substitutions between chemically similar amino acids are more common and should be penalized less. This could be an interesting addition if this project were to be extended. 
 
-### Other Members:
+### Other Members: Aamna
+I think one of the biggest things I took away from this project was becoming more comfortable with the idea that there isn't always one correct way to approach a problem. When I was working through the functions and when we came together to compare our code, I came across various ways to do the same thing and we had made quite a few different decisions, but a lot of our implementations were actually doing the same thing. I think previously I would have been more concerned about figuring out which approach was the "right" one, or even jumped to doubt my code over anothers but this time I felt more comfortable looking at why each approach worked, deciding what made the most sense for our final code and most importantly to me confidently discuss what I wrote and why.
+
+I also felt like I understood the algorithms much better this time around. Being able to reuse Smith-Waterman from Project 05 helped because I wasn't starting completely from scratch. The Neighbor-Joining calculations still took me a while to understand, especially when it came to updating the distance matrix and calculating branch lengths, but I felt like I could actually follow what the code was doing rather than just trying to get it to run.
+
+Something I really appreciated about this project was that I had more time to play around with testing. I used the walkthrough Marcus posted throughout the project, and it was really helpful to have something I could keep referring back to as I worked through the different steps. I was able to test things as I went, compare my results, and go back to figure out why something wasn't working the way I expected. I think getting to test made a big difference in how well I understood my own code, rather than just getting it to work and moving on.
+
+I still feel like I'm slower at coding than I'd like to be, even when I understand the concepts. But I think I'm getting better at working through problems without feeling like everything needs to be perfect from the beginning. Overall, I feel more confident discussing my code with other people, questioning my decisions, and explaining why I approached something a certain way. I think that's been one of the biggest improvements for me over these last few projects.
 
 ### Other Members:
 
@@ -192,4 +202,12 @@ Studier, J. A., & Keppler, K. J. (1988). A note on the neighbor-joining algorith
 
 
 ### AI Usage
-Katelyn: I used Claude Opus 5.5 for this project. I used it to help me understand the background material, and to work through small examples by hand. It guided me through writing the pseudocode and Python for `build_distance_matrix` and `neighbor_joining` by asking questions and giving me hints if I needed them. It helped me debug syntax, and suggested the fix for extracting the short sequence IDs in `read_fasta`. It also helped me with Git and VS Code setup as well as improving my line comments. For the README, I also used it to help me write the Documentation and Usage section, as well as the Design Decisions, and the Formulas, which I reviewed and edited. It gave me feedback on my description and reflection, which I wrote myself.
+Katelyn: 
+I used Claude Opus 5.5 for this project. I used it to help me understand the background material, and to work through small examples by hand. It guided me through writing the pseudocode and Python for `build_distance_matrix` and `neighbor_joining` by asking questions and giving me hints if I needed them. It helped me debug syntax, and suggested the fix for extracting the short sequence IDs in `read_fasta`. It also helped me with Git and VS Code setup as well as improving my line comments. For the README, I also used it to help me write the Documentation and Usage section, as well as the Design Decisions, and the Formulas, which I reviewed and edited. It gave me feedback on my description and reflection, which I wrote myself.
+
+Aamna:
+ChatGPT (GPT-6), 2026.
+I used ChatGPT throughout this project to help me understand the Neighbor-Joining algorithm and work through parts of my implementation. I especially needed help understanding how the corrected distance matrix was calculated, how branch lengths were determined, and how the matrix was updated after joining two nodes. I also used it to help troubleshoot parts of my code, to test whether my implementation was producing the expected results, and to
+help me with syntax and optimize commenting.
+
+I also used ChatGPT when comparing different approaches to the project, particularly recursion versus iteration, stopping at two versus three nodes, and different ways of normalizing similarity scores and converting them into distances. It helped me understand the reasoning behind these decisions so I could better explain my choices during our group discussions.
