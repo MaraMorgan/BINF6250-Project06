@@ -12,18 +12,14 @@ conda activate module06
 ```
 
 ### Running the project
-1. Open `project06/project06.ipynb` in VS Code or Jupyter and select the `module06` environment as the kernel
-2. Make sure the sequence file is at `project06/data/lafayette_SARS_RT.fasta`. The notebook reads it using the relative path `data/lafayette_SARS_RT.fasta`.
+1. Open `project06.ipynb` in VS Code or Jupyter and select the `module06` environment as the kernel
+2. Download the data from the Canvas assignment page and place it at `data/lafayette_SARS_RT.fasta` next to the notebook. The data is not included in this repository.
 3. Run all cells from top to bottom. The final cell reads the sequences, builds the distance matrix, runs neighbor joining, and plots the tree
 
 ### Functions
 - **`read_fasta(filename)`**: Takes the path to a FASTA file and returns a dictionary mapping each sequence ID to its sequence. The sequence ID is the last word on each header line. 
 - **`cal_score(matrix, seq1, seq2, i, j, match, mismatch, gap)`**: Helper reused from Project 05. Returns the Smith-Waterman score for one cell of the scoring matrix (never below 0). The traceback direction was removed since only the score is needed
-- **`smith_waterman(sequence1, sequence2, match_score=2.0, mismatch_penalty=-1.0, gap_penalty=-1.0)`**: Returns a normalized similarity score between 0 and 1: the best local alignment score divided by the average of the two sequences' self-scores (each sequence's length x match score).
-
-
-** add: for this example it doesnt matter if we normalize using sqaure root or if we do the average of the 2 self-scores because all the sequences have the same length 
-
+- **`smith_waterman(sequence1, sequence2, match_score=2.0, mismatch_penalty=-1.0, gap_penalty=-1.0)`**: Returns a normalized similarity score between 0 and 1: the best local alignment score divided by the average of the two sequences' self-scores (each sequence's length x match score). Because all sequences in this dataset are the same length, normalizing it by the average self-score gives the same result as other options such as the geometric mean (the square root of the product of the self-scores)
 
 - **`build_distance_matrix(sequences)`**: Takes the sequence dictionary and returns a tuple of the n x n distance matrix and the list of IDs in matrix order. Each similarity is clamped to [0.000001, 1] and converted to a distance with -ln
 - **`neighbor_joining(distance_matrix, labels)`**: Takes the distance matrix and IDs and returns the tree as a Newick string. Negative branch lengths are set to 0, with the full pairwise distance given to the sister branch
@@ -31,21 +27,16 @@ conda activate module06
 
 
 ### Output
-The notebook diplays a plot of the tree. The plot shows a root on the left since `Bio.Phylo` draws every tree as if it had a root on the left, even though neighbor joining never chose one, so the left to right order of splits means nothing. The y-axis is labeled with numbers, but that's just how the plot spaces out the labels, and it has no meaning. Only which sequences group together, and the horizontal branch lengths should be interpreted.
+The notebook displays a plot of the tree. The plot shows a root on the left since `Bio.Phylo` draws every tree as if it had a root on the left, even though neighbor joining never chose one, so the left to right order of splits means nothing. The y-axis is labeled with numbers, but that's just how the plot spaces out the labels, and it has no meaning. Only which sequences group together, and the horizontal branch lengths should be interpreted.
 
 ## Pseudocode
 ### read_fasta
 ```
-sequence = empty dict
-current_id = None
-for each line in file:
-    strip whitespace
-    if line starts with ">":
-        current_id = last word in the line
-        sequence[current_id] = empty string
-    else if line is not empty:
-        append line to sequence[current_id]
-return sequence
+parse the FASTA file with Biopython's SeqIO
+for each record:
+    id = last word of the header line (the short ID)
+    sequence = the record's sequence as a plain string
+return dictionary of {id: sequence}
 ```
 
 ### smith_waterman
@@ -130,7 +121,7 @@ Notation: `D[i][j]` is the distance between nodes i and j, `n` is the number of 
 
 How I reconstructed it: two sequences can look close only because both are close to everything (short branches near the middle of the tree). The row sum `r[i]` measures how far node i is from everyone. Subtracting `r[i]` and `r[j]` removes that bias, so pairs that are close to each other *relative to how close they are to everyone else* get the lowest score. `D[i][j]` is a single distance while each row sum adds up many, so `D[i][j]` is multiplied by `(n - 2)` to put them on the same footing. Because `n` and the row sums change after every join, D\* is recalculated each round.
 
-Comparison with Saitou & Nei (1987): the original paper chooses the pair whose join gives the smallest total branch length for the tree. Studier & Keppler (1988) showed this simplifies to the D\* formula above, so both choose the same pair. The difference is in how the criterion is written, not which pair it selects. [Check this against the paper before submitting.]
+Comparison with Saitou & Nei (1987): Saitou & Nei describe the method as choosing, at each step, the pair of neighbors that minimizes the total branch length of the tree, starting from a star-shaped tree. The `D*` formula used here is the formulation given by Studier & Keppler (1988), who present it as an alternative to Saitou & Nei's formulation that runs in O(N^3) time (equations 1–2). Studier & Keppler also note that their distance-update formula differs from the one in Saitou & Nei and is the correct one when the distances are treelike (equation 3), and that Saitou & Nei's proof that the method recovers the correct tree from treelike data was incorrect, which they correct.
 
 **Branch lengths** (source: project notebook, Neighbor-Joining Algorithm cell)
 - `arm_i = (D[i][j] + (r[i] - r[j]) / (n - 2)) / 2`
@@ -147,6 +138,8 @@ The paths from i to x and from j to x both pass through u. Adding them counts `D
 - `similarity = SW_score(a, b) / ((self_a + self_b) / 2)`, where `self_a = len(a) * match_score`
 - similarity is clamped to [0.000001, 1], then `distance = -ln(similarity)`
 
+**Why -ln** -ln flips the scale so identical sequences have distance 0 and less similar sequences have larger distances. As sequences diverge, similarity decreases fractionally, not by a fixed amount, so log makes distances grow roughly in proportion to evolutionary change. This keeps distances closer to additive along a tree. For HIV RT sequences in this project, which are very similar, -ln(sim) and 1 - sim give nearly the same values; this choice matters more for distantly related sequences.
+
 Normalizing by the pair's average self-score corrects for sequence length (based on the normalization idea in Feng & Doolittle, 1987).
 
 ### Design decisions
@@ -161,13 +154,42 @@ Normalizing by the pair's average self-score corrects for sequence length (based
 
 **Negative branch lengths:** these come from the method, not a bug. Real sequence distances are not perfectly additive, so the branch-length formula can overshoot. When an arm is negative, it is set to 0 and the other arm gets the full `D[i][j]`, so the distance between the two joined nodes is kept. On the HIV RT data, this happened 2 times out of 18 joins.
 
-**Testing:** before using the HIV data, I ran `neighbor_joining` on a 4-taxon matrix with a known additive tree (A and C on one side, B and D on the other, with outer branches of 1 and 10 and a middle branch of 1). Raw distance alone would wrongly pair A with B. The output was `((A:1.0,C:10.0),(B:1.0,D:10.0):1.0);`, which recovers the correct pairs and every branch length exactly, with no negative branches. I also checked that the final tree for 20 sequences has 19 commas (one per join, plus the final connection).
+**Testing:** before using the HIV data, I ran `neighbor_joining` on a 4-taxon matrix with a known additive tree (A and C on one side, B and D on the other, with outer branches of 1 and 10 and a middle branch of 1). Raw distance alone would wrongly pair A with B. The output was `((A:1.0,C:10.0),(B:1.0,D:10.0):1.0);`, which recovers the correct pairs and every branch length exactly, with no negative branches. I also checked that the final tree for 20 sequences has 19 commas (one per join, plus the final connection). The docstring examples provided with the template do not match our results exactly. They list 19 sequences, while the provided file contains 20, so our Newick string has 19 commas instead of 18. The example distances (0.004 and 0.012) also differ from ours (0.007, 0.047, and 0.040 for the first three sequences). Because all the sequences are the same length, the choice of normalization does not affect the distances, so the examples were most likely generated from a different version of the data. 
 
 
-## Sucesses
+## Successes
+- We were able to reuse and trim the project 05 smith-waterman code.
 
 ## Struggles
+- Understanding why `D*` corrects raw distance
+- Deciding between using -ln() and 1 - sim for the similarity to distance conversion, but we eventually chose -ln() because it makes distances grow roughly in proportion to evolutionary change, which keeps them closer to additive.
 
 ## Reflections 
+### Group Leader: Katelyn
+Going into this project, I had a basic understanding of how the neighbor-joining algorithm works, but the Canvas module was a very helpful step-by-step that allowed me to fully refresh and clarify all the parts. Working out an example by hand helped me a lot to understand how to go about writing the pseudocode. I don't have as much experience using NumPy arrays, so the hardest part of this for me was understanding how to implement the pseudocode in python. I think that starting with a quick refresher of the NumPy functions themselves before I start would help me work more efficiently.
+Our group worked well together, and we decided to independently attempt to write the pseudocode before meeting to discuss it. This was successful because it allowed us to all identify the parts that we didn't understand and all get the chance to try it. 
+In the future, I think it would be interesting to consider that our Smith-Waterman scoring gives every mismatch the same penalty. For amino acids, a substitution matrix like BLOSUM62 would be more biologically accurate, since substitutions between chemically similar amino acids are more common and should be penalized less. This could be an interesting addition if this project were to be extended. 
+
+### Other Members:
+
+### Other Members:
 
 ## Appendix (AI usage, citations, etc.)
+### References:
+Feng, D.-F., & Doolittle, R. F. (1987). Progressive sequence alignment as a prerequisite to correct phylogenetic trees. Journal of Molecular Evolution, 25(4), 351–360. https://doi.org/10.1007/BF02603120
+
+Gascuel, O., & Steel, M. (2006). Neighbor-joining revealed. Molecular Biology and Evolution, 23(11), 1997–2000. https://doi.org/10.1093/molbev/msl072
+
+Kosakovsky Pond, S. L., Weaver, S., Leigh Brown, A. J., & Wertheim, J. O. (2018). HIV-TRACE (TRAnsmission Cluster Engine): A tool for large scale molecular epidemiology of HIV-1 and other rapidly evolving pathogens. Molecular Biology and Evolution, 35(7), 1812–1819. https://doi.org/10.1093/molbev/msy016
+
+Rhee, S.-Y., Gonzales, M. J., Kantor, R., Betts, B. J., Ravela, J., & Shafer, R. W. (2003). Human immunodeficiency virus reverse transcriptase and protease sequence database. Nucleic Acids Research, 31(1), 298–303. https://doi.org/10.1093/nar/gkg100
+
+Saitou, N., & Nei, M. (1987). The neighbor-joining method: A new method for reconstructing phylogenetic trees. Molecular Biology and Evolution, 4(4), 406–425. https://doi.org/10.1093/oxfordjournals.molbev.a040454
+
+Smith, T. F., & Waterman, M. S. (1981). Identification of common molecular subsequences. Journal of Molecular Biology, 147(1), 195–197. https://doi.org/10.1016/0022-2836(81)90087-5
+
+Studier, J. A., & Keppler, K. J. (1988). A note on the neighbor-joining algorithm of Saitou and Nei. Molecular Biology and Evolution, 5(6), 729–731. https://doi.org/10.1093/oxfordjournals.molbev.a040527
+
+
+### AI Usage
+Katelyn: I used Claude Opus 5.5 for this project. I used it to help me understand the background material, and to work through small examples by hand. It guided me through writing the pseudocode and Python for `build_distance_matrix` and `neighbor_joining` by asking questions and giving me hints if I needed them. It helped me debug syntax, and suggested the fix for extracting the short sequence IDs in `read_fasta`. It also helped me with Git and VS Code setup as well as improving my line comments. For the README, I also used it to help me write the Documentation and Usage section, as well as the Design Decisions, and the Formulas, which I reviewed and edited. It gave me feedback on my description and reflection, which I wrote myself.
