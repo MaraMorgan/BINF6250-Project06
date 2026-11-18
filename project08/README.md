@@ -25,11 +25,11 @@ Install NumPy if needed:
 
     pip install numpy
 
-Open the project notebook (`project08MM.ipynb`) in Jupyter or VS Code and run the cells in order. The class definition must be run before the example cells.
+Open the project notebook (`project08.ipynb`) in PyCharm or VS Code and run the cells in order. The class definition must be run before the example cells.
 
 ### Running the project
 Create a model by passing the states, the observation symbols, and the three probability tables as NumPy arrays. The order of `states` must match the row order of every array, and the order of `observation_symbols` must match the column order of the emission array.
-
+```
     import numpy as np
 
     states = ["Island", "Genome"]            # row 0 = Island, row 1 = Genome
@@ -64,6 +64,7 @@ Output:
 
     ['Genome', 'Genome', 'Genome', 'Genome', 'Genome', 'Genome', 'Genome', 'Genome', 'Genome']
     -13.929108456051065
+```
 
 `viterbi()` returns the most probable path as a list of state names. The natural-log probability of that path is stored in `hmm.best_final_score`.
 
@@ -87,32 +88,40 @@ Output:
 
 
 ### Output (Testing)
-# Example initial probabilities (probability of starting in each state)
+#### Example initial probabilities (probability of starting in each state)
+```
 states = ["Genome", "Island"]
 observations = ["A", "C", "G", "T"]
 init_probs = [0.2, 0.8]
-# "Island": 0.2, "Genome": 0.8
+```
+
+"Island": 0.2, "Genome": 0.8
 
 
-# Example transition probabilities (probability of moving from one state to another)
+#### Example transition probabilities (probability of moving from one state to another)
+```
 trans_probs = np.array([
     [0.7, 0.3],
     [0.1, 0.9]])
+```
 
-# "Island": {"I": 0.7, "G": 0.3}, "Genome": {"I": 0.1, "G": 0.9}
-# Example emission probabilities (probability of observing a symbol in a given state)
+"Island": {"I": 0.7, "G": 0.3}, "Genome": {"I": 0.1, "G": 0.9}
+
+#### Example emission probabilities (probability of observing a symbol in a given state)
+```
 emit_probs = np.array([
     [0.1, 0.4, 0.4, 0.1],
     [0.3, 0.2, 0.2, 0.3]
 ])
+```
 
-# "Island": {"A": 0.1, "C": 0.4, "G": 0.4, "T": 0.1},
-# "Genome": {"A": 0.3, "C": 0.2, "G": 0.2, "T": 0.3}
+"Island": {"A": 0.1, "C": 0.4, "G": 0.4, "T": 0.1},
+"Genome": {"A": 0.3, "C": 0.2, "G": 0.2, "T": 0.3}
 
 
-# Example observation sequence
+#### Example observation sequence
+```
 obs_seq = "GGCACTGAA"
-
 
 hmm = HiddenMarkovModel(
     states=states,
@@ -124,7 +133,7 @@ hmm = HiddenMarkovModel(
 hmm.observation_sequence = obs_seq
 result = hmm.viterbi()
 print(result)
-
+```
 
 ['Genome', 'Genome', 'Genome', 'Island', 'Island', 'Island', 'Island', 'Island', 'Island']
 
@@ -132,13 +141,13 @@ print(result)
 
 ## Pseudocode
 ### convert_to_log
-'''
+```
 Convert each probability array to log probability array; store as new attribute
 
-'''
+```
 
 ### initialization_viterbi
-'''
+```
 Get the number of hidden states and the length of the observation sequence
     # Rows = number of hidden states
     # Columns = length of observation sequence
@@ -153,27 +162,27 @@ Getting the first observation and its emission probability
 Calculation for first column of probabilities
     # initial probability from symbol, index + the first emission probability (remember we are in log, so its addition)
 Store in first column of the probability matrix
-'''
+```
 
 ### calculate_viterbi_score
-'''
+```
 Iterate through each observation
 iterate through each possible hidden state at that position
 calculate probabilities for each hidden state from previous state
 find the max
 Add that to emission probability and store 
 store the previous state that produced it for the traceback
-'''
+```
 
 ### termination_viterbi
-'''
+```
 Determine the last index of the observation sequence
 Determine the best final state
 Determine the best final probability
-'''
+```
 
 ### traceback_viterbi
-''' 
+``` 
 Initialize with the best final state
 Set current state equal to that
 iterate backwards through the observations
@@ -182,7 +191,7 @@ update current state to previous state
 add previous state into path
 iterate until start
 reverse the final order
-'''
+```
 
 
 ### Formulas
@@ -247,13 +256,13 @@ $$\pi_{i-1}^* = \text{ptr}_i(\pi_i^*)$$
 * $L$: the length of the observation sequence
 * $i$: the position in the sequence
 * $x$: the observation sequence; $x_i$ is the symbol at position $i$
-* $\pi^*$: the most probable path; $\pi_i^*$ is its state at position $i$ (not the same as the initial probabilities $\pi_i$)
+* $\pi_i^\*$: the most probable path; $\pi_i^\*$ is its state at position $i$ (not the same as the initial probabilities $\pi_i$)
 
 ### In our implementation
 
 * Our model has no end state, so termination drops $a_{k0}$:
 
-$$P(x, \pi^*) = \max_k v_k(L), \qquad \pi_L^* = \arg\max_k v_k(L)$$
+$$P(x, \pi^\*) = \max_k v_k(L), \qquad \pi_L^\* = \arg\max_k v_k(L)$$
 
 * We are given initial probabilities directly, so column 1 is $v_k(1) = \pi_k \, e_k(x_1)$ and the recursion starts at $i = 2$.
 * To avoid underflow, we work in log space (max stays max; products become sums):
@@ -262,7 +271,7 @@ $$\log v_\ell(i) = \log e_\ell(x_i) + \max_k \big( \log v_k(i-1) + \log a_{k\ell
 
 ### Design Decisions
 
-## Sucesses
+## Successes
 
 ## Struggles
 
@@ -273,7 +282,10 @@ Starting this project, I had somewhat of an understanding of the Viterbi algorit
 I used Claude to help walk me through examples of the Viterbi algorithm, which I felt really helped me understand what we were doing with this project. I also had it help me troubleshoot areas where I was stuck with the pseudocode, and I definitely found this project more difficult than past ones. Once we had the pseudocode, the Python was not too bad. 
 Since this project is the start of many others, we had to make sure that we prepared for that. This was definitely different than other projects because we didn't previously need to change things so they could be expanded upon, but this process seems to better represent what this process would look like in the real world. I am interested to see how this project will be expanded upon in the future modules and how we can add more algorithms to our HMM class.
 
-### Other Members: 
+### Other Members: Mara
+I was generally unfamiliar with HMMs going into this project, and did not have any experience with the Viterbi algorithm. Because we were given no background or template code like we usually would, I went ahead and compiled everything from the assignment and primer pages to "recreate" the way we normally do projects, which I think helped a lot. I also did the calculations by hand, although without converting to log, to double check the output. This project built off of the previous projects very nicely, particularly with the recursion and traceback. In my code version, I structured everything around numpy arrays for more efficient indexing, but struggled to do input data conversion, such as the provided examples being dictionaries. The indexing, while not necessarily hard, was difficult to keep track of, causing a lot of debugging towards the end. 
+
+This was also my first time future-proofing. It is much more difficult than I had originally anticipated because, without knowing what will need to be expanded in the next projects, it's hard knowing the best way to structure everything. Because we know the topic of the next projects, we had an idea of what to do, but without having learned it in class or seen the assignment yet, it was a challenge. My group mates and I were able to come up with insights into how to structure our code to accommodate this. 
 
 ### Other Members: 
 
@@ -298,3 +310,5 @@ Studier, J. A., & Keppler, K. J. (1988). A note on the neighbor-joining algorith
 
 ### AI Usage
 Katelyn: I used Claude (Anthropic) throughout this project, mainly to understand the algorithm and check work. The group's main implementation was written by Mara. I used Claude to walk me through the Viterbi algorithm step by step, explain related concepts such as conditional independence and object-oriented programming, review and correct pseudocode and the formatting of the formulas for the notebook, guide me through writing a dictionary-based implementation by pointing out errors and giving me hints while I wrote most of the methods myself, test implementations against hand-checked examples to identify bugs and edge cases we missed, to draft the Setup and Running the Project sections of the README, and revise my Description section. 
+
+Mara: I used ChatGPT (OpenAI) to double check my indexing throughout the program and to establish my Class and initialization in such a way that I can add to it in the next projects. Prompt used: "Implementing the viterbi algorithm for HMM and checking me indexing through the numpy arrays. Do not write any code for me"
